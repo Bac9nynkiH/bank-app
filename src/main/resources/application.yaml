@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: bank
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sample_database
+    username: dbprod
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    database: postgresql
