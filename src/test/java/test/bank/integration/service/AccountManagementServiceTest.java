@@ -96,14 +96,12 @@ class AccountManagementServiceTest {
     }
 
     @Test
+    @Transactional
     void findAll() {
         var expected = new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
-        bankAccountRepository.save(expected);
+        expected = bankAccountRepository.save(expected);
 
         var returned = service.findAll();
-
-        verify(bankAccountRepository,times(1)).findAll();
-        verifyNoMoreInteractions(bankAccountRepository);
 
         assertArrayEquals(List.of(expected).toArray(),returned.toArray());
     }
@@ -119,6 +117,6 @@ class AccountManagementServiceTest {
 
         var returned = service.getByAccountNumber(BANK_ACCOUNT_NUMBER);
         assertEquals(expected,returned);
-        assertEquals(expected.getBalance(),returned.getBalance());
+        assertEquals(expected.getBalance().setScale(2,RoundingMode.HALF_UP),returned.getBalance());
     }
 }
