@@ -15,7 +15,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"id","accountNumber"})
+@EqualsAndHashCode(of = {"id", "accountNumber"})
 @ToString
 public class BankAccount {
     @Id
@@ -24,7 +24,7 @@ public class BankAccount {
 
     @Column(nullable = false, precision = 20, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
-    @Column(name = "account_number",unique = true)
+    @Column(name = "account_number", unique = true)
     private String accountNumber;
     @OneToMany(mappedBy = "bankAccount")
     private List<BankTransaction> transactions = new ArrayList<>();
@@ -33,6 +33,7 @@ public class BankAccount {
         this.balance = balance;
         this.accountNumber = accountNumber;
     }
+
     public BankAccount(UUID id, BigDecimal balance, String accountNumber) {
         this.id = id;
         this.balance = balance;

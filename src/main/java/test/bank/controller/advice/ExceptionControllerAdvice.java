@@ -3,8 +3,6 @@ package test.bank.controller.advice;
 import jakarta.persistence.PersistenceException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.HibernateException;
-import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -13,7 +11,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -21,8 +18,6 @@ import test.bank.exception.ApiError;
 import test.bank.exception.BankApplicationBadRequestException;
 import test.bank.exception.BankApplicationException;
 import test.bank.exception.BankApplicationNotFoundException;
-
-import java.sql.SQLException;
 
 @Slf4j
 @ControllerAdvice
@@ -38,6 +33,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiError.from(HttpStatus.BAD_REQUEST, "validation error", errors.toString(), ((ServletWebRequest) request).getRequest().getRequestURI()));
     }
+
     @ExceptionHandler(value = {BankApplicationNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     protected ResponseEntity<ApiError> handleBankApplicationNotFoundException(HttpServletRequest req, BankApplicationNotFoundException ex) {
@@ -49,6 +45,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.from(HttpStatus.NOT_FOUND, error, bodyOfResponse, req.getRequestURI()));
     }
+
     @ExceptionHandler(value = {BankApplicationBadRequestException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     protected ResponseEntity<ApiError> handleBankApplicationBadRequestException(HttpServletRequest req, BankApplicationBadRequestException ex) {
@@ -60,6 +57,7 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiError.from(HttpStatus.BAD_REQUEST, error, bodyOfResponse, req.getRequestURI()));
     }
+
     @ExceptionHandler(value = {BankApplicationException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     protected ResponseEntity<ApiError> handleBankApplicationException(HttpServletRequest req, BankApplicationBadRequestException ex) {

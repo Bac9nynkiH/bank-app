@@ -14,6 +14,6 @@ import java.math.BigDecimal;
 public class TransactionRequestDto {
     @Pattern(regexp = "\\d{16}", message = "must be exactly 16 digits")
     private String accountNumber;
-    @DecimalMin(value = "0",inclusive = false)
+    @DecimalMin(value = "0", inclusive = false)
     private BigDecimal amount;
 }

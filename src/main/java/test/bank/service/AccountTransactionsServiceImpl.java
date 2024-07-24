@@ -3,7 +3,10 @@ package test.bank.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import test.bank.domain.banking.transaction.*;
+import test.bank.domain.banking.transaction.DepositTransaction;
+import test.bank.domain.banking.transaction.MoneyFlow;
+import test.bank.domain.banking.transaction.TransferTransaction;
+import test.bank.domain.banking.transaction.WithdrawTransaction;
 import test.bank.exception.BankApplicationException;
 import test.bank.exception.BankApplicationNegativeBalanceException;
 import test.bank.exception.BankApplicationNotFoundException;
@@ -24,10 +27,10 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public TransferTransaction transfer(String senderAccountNumber, String receiverAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BankApplicationException("amount should be positive");
         }
-        if(senderAccountNumber.equals(receiverAccountNumber)){
+        if (senderAccountNumber.equals(receiverAccountNumber)) {
             throw new BankApplicationException("senderAccountNumber and receiverAccountNumber can not be identical");
         }
 
@@ -36,7 +39,7 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
         var sender = bankAccountRepository.getByAccountNumber(senderAccountNumber).orElseThrow(() -> new BankApplicationNotFoundException());
         var receiver = bankAccountRepository.getByAccountNumber(receiverAccountNumber).orElseThrow(() -> new BankApplicationNotFoundException());
 
-        if(sender.getBalance().subtract(amount).compareTo(BigDecimal.ZERO) < 0)
+        if (sender.getBalance().subtract(amount).compareTo(BigDecimal.ZERO) < 0)
             throw new BankApplicationNegativeBalanceException("sender does not have enough money: " + senderAccountNumber);
 
         var senderTransaction = new TransferTransaction();
@@ -69,7 +72,7 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public WithdrawTransaction withdraw(String senderAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BankApplicationException("amount should be positive");
         }
 
@@ -77,7 +80,7 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
 
         var sender = bankAccountRepository.getByAccountNumber(senderAccountNumber).orElseThrow(() -> new BankApplicationNotFoundException());
 
-        if(sender.getBalance().subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
+        if (sender.getBalance().subtract(amount).compareTo(BigDecimal.ZERO) < 0) {
             throw new BankApplicationNegativeBalanceException("sender does not have enough money: " + senderAccountNumber);
         }
 
@@ -100,7 +103,7 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public DepositTransaction deposit(String receiverAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BankApplicationException("amount should be positive");
         }
 

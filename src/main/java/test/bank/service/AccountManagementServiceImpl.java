@@ -1,6 +1,5 @@
 package test.bank.service;
 
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +20,7 @@ public class AccountManagementServiceImpl implements AccountManagementService {
     private final BankAccountRepository bankAccountRepository;
     private final AccountNumberGeneratorService accountNumberGeneratorService;
     private final AccountTransactionsService accountTransactionsService;
+
     @Override
     @Transactional
     public BankAccount createBankAccount(BigDecimal initialBalance) {
@@ -32,7 +32,7 @@ public class AccountManagementServiceImpl implements AccountManagementService {
         bankAccount.setBalance(BigDecimal.ZERO);
         bankAccount.setAccountNumber(accountNumberGeneratorService.generateAccountNumber());
         bankAccount = bankAccountRepository.save(bankAccount);
-        if(initialBalance.compareTo(BigDecimal.ZERO) > 0)
+        if (initialBalance.compareTo(BigDecimal.ZERO) > 0)
             accountTransactionsService.deposit(bankAccount.getAccountNumber(), initialBalance);
 
         return bankAccount;

@@ -4,7 +4,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -17,9 +16,11 @@ import test.bank.domain.banking.BankAccount;
 import test.bank.repository.BankAccountRepository;
 
 import java.math.BigDecimal;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
@@ -32,14 +33,16 @@ public class BankAccountRepositoryTest {
     private final String BANK_ACCOUNT_NUMBER = "0001110001110001";
 
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
         transactionTemplate = new TransactionTemplate(transactionManager);
-        bankAccountRepository.save(new BankAccount(BigDecimal.ZERO,BANK_ACCOUNT_NUMBER));
+        bankAccountRepository.save(new BankAccount(BigDecimal.ZERO, BANK_ACCOUNT_NUMBER));
     }
+
     @AfterEach
-    public void cleanUp(){
+    public void cleanUp() {
         bankAccountRepository.deleteAll();
     }
+
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Test
     void testLockBelowTimeout() throws InterruptedException {
@@ -67,8 +70,7 @@ public class BankAccountRepositoryTest {
                             return null;
                         }
                     });
-                }
-                finally {
+                } finally {
                     threadsDone.countDown();
                 }
             });
@@ -90,8 +92,7 @@ public class BankAccountRepositoryTest {
                     return null;
                 }
             });
-        }
-        catch (PessimisticLockingFailureException e){
+        } catch (PessimisticLockingFailureException e) {
             System.out.println("[PessimisticLockingFailureException] during lock test");
             fail();
         }

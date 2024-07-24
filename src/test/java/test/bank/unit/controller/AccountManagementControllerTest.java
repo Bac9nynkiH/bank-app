@@ -45,9 +45,9 @@ class AccountManagementControllerTest {
     void createBankAccountSuccess(String initialBalanceStr) throws Exception {
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
 
-        var expected = new BankAccountResponseDto(UUID.randomUUID(),initialBalance,BANK_ACCOUNT_NUMBER);
+        var expected = new BankAccountResponseDto(UUID.randomUUID(), initialBalance, BANK_ACCOUNT_NUMBER);
 
-        var entity = new BankAccount(initialBalance,BANK_ACCOUNT_NUMBER);
+        var entity = new BankAccount(initialBalance, BANK_ACCOUNT_NUMBER);
         when(accountManagementService.createBankAccount(initialBalance)).thenReturn(entity);
 
         var dto = new BankAccountCreateRequestDto(initialBalance);
@@ -58,7 +58,7 @@ class AccountManagementControllerTest {
                 .andExpect(jsonPath("$.accountNumber").value(expected.getAccountNumber()))
                 .andExpect(jsonPath("$.balance").value(expected.getBalance()));
 
-        verify(accountManagementService,times(1)).createBankAccount(initialBalance);
+        verify(accountManagementService, times(1)).createBankAccount(initialBalance);
         verifyNoMoreInteractions(accountManagementService);
     }
 
@@ -73,32 +73,32 @@ class AccountManagementControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest());
 
-        verify(accountManagementService,times(0)).createBankAccount(initialBalance);
+        verify(accountManagementService, times(0)).createBankAccount(initialBalance);
         verifyNoMoreInteractions(accountManagementService);
     }
 
     @Test
     void findAllSuccess() throws Exception {
         var id = UUID.randomUUID();
-        List<BankAccount> expected = List.of(new BankAccount(id,BigDecimal.ZERO,BANK_ACCOUNT_NUMBER));
+        List<BankAccount> expected = List.of(new BankAccount(id, BigDecimal.ZERO, BANK_ACCOUNT_NUMBER));
 
         when(accountManagementService.findAll()).thenReturn(expected);
 
         mockMvc.perform(get("/api/management/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].balance").value(BigDecimal.ZERO.setScale(2,RoundingMode.HALF_UP)))
+                .andExpect(jsonPath("$[0].balance").value(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)))
                 .andExpect(jsonPath("$[0].accountNumber").value(BANK_ACCOUNT_NUMBER))
                 .andExpect(jsonPath("$[0].id").value(id.toString()));
 
-        verify(accountManagementService,times(1)).findAll();
+        verify(accountManagementService, times(1)).findAll();
         verifyNoMoreInteractions(accountManagementService);
     }
 
     @Test
     void getByAccountNumberSuccess() throws Exception {
         var id = UUID.randomUUID();
-        BankAccount expected = new BankAccount(id,BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
+        BankAccount expected = new BankAccount(id, BigDecimal.ZERO, BANK_ACCOUNT_NUMBER);
 
         when(accountManagementService.getByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(expected);
 
@@ -108,9 +108,10 @@ class AccountManagementControllerTest {
                 .andExpect(jsonPath("$.accountNumber").value(BANK_ACCOUNT_NUMBER))
                 .andExpect(jsonPath("$.id").value(id.toString()));
 
-        verify(accountManagementService,times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
+        verify(accountManagementService, times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
         verifyNoMoreInteractions(accountManagementService);
     }
+
     @Test
     void getByAccountNumberNotFoundError() throws Exception {
         when(accountManagementService.getByAccountNumber(BANK_ACCOUNT_NUMBER)).thenThrow(new BankApplicationNotFoundException());
@@ -119,7 +120,7 @@ class AccountManagementControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("entity not found"));
 
-        verify(accountManagementService,times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
+        verify(accountManagementService, times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
         verifyNoMoreInteractions(accountManagementService);
     }
 }

@@ -11,8 +11,9 @@ import java.util.UUID;
 public class AccountNumberGeneratorServiceImpl implements AccountNumberGeneratorService {
     @Value("${app.bank.account-number-length:16}")
     private Integer accNumberLength;
+
     @Override
     public String generateAccountNumber() {
-        return String.format("%010d",new BigInteger(UUID.randomUUID().toString().replace("-",""),16)).substring(0,accNumberLength);
+        return String.format("%010d", new BigInteger(UUID.randomUUID().toString().replace("-", ""), 16)).substring(0, accNumberLength);
     }
 }

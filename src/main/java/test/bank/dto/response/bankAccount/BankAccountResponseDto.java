@@ -24,6 +24,6 @@ public class BankAccountResponseDto {
     }
 
     public static BankAccountResponseDto of(BankAccount bankAccount) {
-        return new BankAccountResponseDto(bankAccount.getId(),bankAccount.getBalance(),bankAccount.getAccountNumber());
+        return new BankAccountResponseDto(bankAccount.getId(), bankAccount.getBalance(), bankAccount.getAccountNumber());
     }
 }

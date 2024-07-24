@@ -15,7 +15,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-public class DepositTransaction extends BankTransaction{
+public class DepositTransaction extends BankTransaction {
     public DepositTransaction(BigDecimal amount, Long timestamp, BankAccount bankAccount, MoneyFlow flow) {
         super(amount, timestamp, bankAccount, flow);
     }

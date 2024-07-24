@@ -18,19 +18,22 @@ import test.bank.service.interfaces.AccountTransactionsService;
 @RequiredArgsConstructor
 public class AccountTransactionController {
     private final AccountTransactionsService accountTransactionsService;
+
     @PostMapping("/transfer")
-    public TransferTransactionResponseDto transfer(@RequestBody @Valid TransferTransactionRequestDto transactionRequestDto){
-        if(transactionRequestDto.getSenderAccountNumber().equals(transactionRequestDto.getReceiverAccountNumber())){
+    public TransferTransactionResponseDto transfer(@RequestBody @Valid TransferTransactionRequestDto transactionRequestDto) {
+        if (transactionRequestDto.getSenderAccountNumber().equals(transactionRequestDto.getReceiverAccountNumber())) {
             throw new BankApplicationBadRequestException("receiver and sender account number can not be the same");
         }
-        return TransferTransactionResponseDto.of(accountTransactionsService.transfer(transactionRequestDto.getSenderAccountNumber(),transactionRequestDto.getReceiverAccountNumber(),transactionRequestDto.getAmount()));
+        return TransferTransactionResponseDto.of(accountTransactionsService.transfer(transactionRequestDto.getSenderAccountNumber(), transactionRequestDto.getReceiverAccountNumber(), transactionRequestDto.getAmount()));
     }
+
     @PostMapping("/withdraw")
-    public TransactionResponseDto withdraw(@RequestBody @Valid TransactionRequestDto transactionRequestDto){
-        return TransactionResponseDto.of(accountTransactionsService.withdraw(transactionRequestDto.getAccountNumber(),transactionRequestDto.getAmount()));
+    public TransactionResponseDto withdraw(@RequestBody @Valid TransactionRequestDto transactionRequestDto) {
+        return TransactionResponseDto.of(accountTransactionsService.withdraw(transactionRequestDto.getAccountNumber(), transactionRequestDto.getAmount()));
     }
+
     @PostMapping("/deposit")
-    public TransactionResponseDto deposit(@RequestBody @Valid TransactionRequestDto transactionRequestDto){
-        return TransactionResponseDto.of(accountTransactionsService.deposit(transactionRequestDto.getAccountNumber(),transactionRequestDto.getAmount()));
+    public TransactionResponseDto deposit(@RequestBody @Valid TransactionRequestDto transactionRequestDto) {
+        return TransactionResponseDto.of(accountTransactionsService.deposit(transactionRequestDto.getAccountNumber(), transactionRequestDto.getAmount()));
     }
 }

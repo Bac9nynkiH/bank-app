@@ -2,7 +2,6 @@ package test.bank.dto.request.transaction;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,6 +16,6 @@ public class TransferTransactionRequestDto {
     private String senderAccountNumber;
     @Pattern(regexp = "\\d{16}", message = "must be exactly 16 digits")
     private String receiverAccountNumber;
-    @DecimalMin(value = "0",inclusive = false)
+    @DecimalMin(value = "0", inclusive = false)
     private BigDecimal amount;
 }

@@ -7,6 +7,8 @@ import java.util.List;
 
 public interface AccountManagementService {
     BankAccount createBankAccount(BigDecimal initialBalance);
+
     List<BankAccount> findAll();
+
     BankAccount getByAccountNumber(String accountNumber);
 }

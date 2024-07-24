@@ -6,10 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import test.bank.domain.banking.transaction.BankTransaction;
 import test.bank.domain.banking.transaction.MoneyFlow;
-import test.bank.domain.banking.transaction.TransferTransaction;
 
 import java.math.BigDecimal;
-import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -21,7 +19,7 @@ public class TransactionResponseDto {
     private String bankAccountNumber;
     private MoneyFlow flow;
 
-    public static TransactionResponseDto of(BankTransaction transaction){
-        return new TransactionResponseDto(transaction.getTimestamp(),transaction.getAmount(),transaction.getBankAccount().getAccountNumber(),transaction.getFlow());
+    public static TransactionResponseDto of(BankTransaction transaction) {
+        return new TransactionResponseDto(transaction.getTimestamp(), transaction.getAmount(), transaction.getBankAccount().getAccountNumber(), transaction.getFlow());
     }
 }

@@ -1,6 +1,5 @@
 package test.bank.integration.service;
 
-import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,55 +50,56 @@ public class AccountTransactionServiceTest {
     private final String BANK_ACCOUNT_NUMBER_SECOND = "0001110001110002";
 
     @AfterEach
-    public void cleanUp(){
+    public void cleanUp() {
         bankTransactionRepository.deleteAll();
         bankAccountRepository.deleteAll();
     }
+
     @BeforeEach
-    public void setUp(){
+    public void setUp() {
         transactionTemplate = new TransactionTemplate(transactionManager);
 
-        var bankAccount1 = bankAccountRepository.save(new BankAccount(BigDecimal.TEN,BANK_ACCOUNT_NUMBER));
-        depositTransactionRepository.save(new DepositTransaction(BigDecimal.TEN,System.currentTimeMillis(),bankAccount1, MoneyFlow.IN));
+        var bankAccount1 = bankAccountRepository.save(new BankAccount(BigDecimal.TEN, BANK_ACCOUNT_NUMBER));
+        depositTransactionRepository.save(new DepositTransaction(BigDecimal.TEN, System.currentTimeMillis(), bankAccount1, MoneyFlow.IN));
 
-        var bankAccount2 = bankAccountRepository.save(new BankAccount(BigDecimal.TEN,BANK_ACCOUNT_NUMBER_SECOND));
-        depositTransactionRepository.save(new DepositTransaction(BigDecimal.TEN,System.currentTimeMillis(),bankAccount2, MoneyFlow.IN));
+        var bankAccount2 = bankAccountRepository.save(new BankAccount(BigDecimal.TEN, BANK_ACCOUNT_NUMBER_SECOND));
+        depositTransactionRepository.save(new DepositTransaction(BigDecimal.TEN, System.currentTimeMillis(), bankAccount2, MoneyFlow.IN));
     }
 
     @Test
     @Transactional
     @Commit
-    public void depositSuccess(){
+    public void depositSuccess() {
         var initialBalance = bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance();
         var initialMoneyInCount = depositTransactionRepository.findAll().size();
 
-        accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER,BigDecimal.ONE);
+        accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER, BigDecimal.ONE);
 
-        assertEquals(initialBalance.add(BigDecimal.ONE),bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
-        assertEquals(initialMoneyInCount + 1,depositTransactionRepository.findAll().size());
+        assertEquals(initialBalance.add(BigDecimal.ONE), bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
+        assertEquals(initialMoneyInCount + 1, depositTransactionRepository.findAll().size());
     }
 
     @Test
     @Transactional
     @Commit
-    public void withdrawSuccess(){
+    public void withdrawSuccess() {
         var withdraws = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER_SECOND);
         var initialBalance = bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance();
         var initialMoneyOutCount = withdraws.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count();
 
-        accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER,BigDecimal.ONE);
+        accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.ONE);
 
         var withdrawsRes = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER);
 
-        assertEquals(initialBalance.subtract(BigDecimal.ONE),bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
-        assertEquals(initialMoneyOutCount + 1,withdrawsRes.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
+        assertEquals(initialBalance.subtract(BigDecimal.ONE), bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
+        assertEquals(initialMoneyOutCount + 1, withdrawsRes.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
     }
 
     @Test
     @Transactional
     @Commit
-    public void transferSuccess(){
-        assertEquals(0,transferTransactionRepository.findAll().size());
+    public void transferSuccess() {
+        assertEquals(0, transferTransactionRepository.findAll().size());
 
         var withdraws = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER_SECOND);
         var initialBalance = bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance();
@@ -109,29 +109,30 @@ public class AccountTransactionServiceTest {
         var initialBalance2 = bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance();
         var initialMoneyInCount = withdraws2.stream().filter(t -> t.getFlow().equals(MoneyFlow.IN)).count();
 
-        accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER,BANK_ACCOUNT_NUMBER_SECOND,BigDecimal.ONE);
+        accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER, BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.ONE);
 
         var withdrawsRes = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER);
-        assertEquals(initialBalance.subtract(BigDecimal.ONE),bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
-        assertEquals(initialMoneyOutCount + 1,withdrawsRes.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
+        assertEquals(initialBalance.subtract(BigDecimal.ONE), bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
+        assertEquals(initialMoneyOutCount + 1, withdrawsRes.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
 
         var withdraws2Res = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER_SECOND);
-        assertEquals(initialBalance2.add(BigDecimal.ONE),bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance());
-        assertEquals(initialMoneyInCount + 1,withdraws2Res.stream().filter(t -> t.getFlow().equals(MoneyFlow.IN)).count());
+        assertEquals(initialBalance2.add(BigDecimal.ONE), bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER_SECOND).get().getBalance());
+        assertEquals(initialMoneyInCount + 1, withdraws2Res.stream().filter(t -> t.getFlow().equals(MoneyFlow.IN)).count());
 
         var transfers = transferTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER);
         var transfers2 = transferTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER_SECOND);
 
-        assertEquals(1,transfers.size());
-        assertEquals(1,transfers2.size());
+        assertEquals(1, transfers.size());
+        assertEquals(1, transfers2.size());
 
-        assertEquals(BANK_ACCOUNT_NUMBER_SECOND,transfers.get(0).getVisavis().getAccountNumber());
-        assertEquals(BANK_ACCOUNT_NUMBER,transfers2.get(0).getVisavis().getAccountNumber());
+        assertEquals(BANK_ACCOUNT_NUMBER_SECOND, transfers.get(0).getVisavis().getAccountNumber());
+        assertEquals(BANK_ACCOUNT_NUMBER, transfers2.get(0).getVisavis().getAccountNumber());
     }
+
     @Test
     @Transactional(propagation = NOT_SUPPORTED)
     @Commit
-    public void transferNegativeBalance(){
+    public void transferNegativeBalance() {
         final BigDecimal[] initialBalance = new BigDecimal[1];
         final BigDecimal[] initialBalance2 = new BigDecimal[1];
         final long[] initialMoneyOutCount = new long[1];
@@ -150,11 +151,11 @@ public class AccountTransactionServiceTest {
             }
         });
 
-        assertThrowsExactly(BankApplicationNegativeBalanceException.class,() -> {
-            accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER,BANK_ACCOUNT_NUMBER_SECOND,BigDecimal.valueOf(11));
+        assertThrowsExactly(BankApplicationNegativeBalanceException.class, () -> {
+            accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER, BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.valueOf(11));
         });
-        assertThrows(BankApplicationException.class,() -> {
-            accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER,BANK_ACCOUNT_NUMBER_SECOND,BigDecimal.valueOf(11));
+        assertThrows(BankApplicationException.class, () -> {
+            accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER, BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.valueOf(11));
         });
 
         transactionTemplate.execute(new TransactionCallback() {
@@ -177,7 +178,7 @@ public class AccountTransactionServiceTest {
     @Test
     @Transactional(propagation = NOT_SUPPORTED)
     @Commit
-    public void withdrawNegativeBalance(){
+    public void withdrawNegativeBalance() {
         final BigDecimal[] initialBalance = new BigDecimal[1];
         final long[] initialMoneyOutCount = new long[1];
         transactionTemplate.execute(new TransactionCallback() {
@@ -191,18 +192,18 @@ public class AccountTransactionServiceTest {
             }
         });
 
-        assertThrowsExactly(BankApplicationNegativeBalanceException.class,() -> {
-            accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER,BigDecimal.valueOf(11));
+        assertThrowsExactly(BankApplicationNegativeBalanceException.class, () -> {
+            accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.valueOf(11));
         });
-        assertThrows(BankApplicationException.class,() -> {
-            accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER,BigDecimal.valueOf(11));
+        assertThrows(BankApplicationException.class, () -> {
+            accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.valueOf(11));
         });
 
         transactionTemplate.execute(new TransactionCallback() {
             public Object doInTransaction(TransactionStatus status) {
                 var withdraws = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER);
-                assertEquals(initialBalance[0],bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
-                assertEquals(initialMoneyOutCount[0],withdraws.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
+                assertEquals(initialBalance[0], bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
+                assertEquals(initialMoneyOutCount[0], withdraws.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
                 return null;
             }
         });
@@ -220,21 +221,19 @@ public class AccountTransactionServiceTest {
             executor.submit(() -> {
                 try {
                     executeThreadForLockTest(9000, () -> accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.ONE), semaphore, permitThreadStart);
-                }
-                finally {
+                } finally {
                     threadsDone.countDown();
                 }
             });
         }
         try {
-            executeMainThreadForLockTest(semaphore,permitThreadStart);
+            executeMainThreadForLockTest(semaphore, permitThreadStart);
             fail();
-        }
-        catch (PessimisticLockingFailureException e){
+        } catch (PessimisticLockingFailureException e) {
             System.out.println("[PessimisticLockingFailureException] during lock test");
             assertTrue(true);
         }
-        executor.awaitTermination(30,TimeUnit.SECONDS);
+        executor.awaitTermination(30, TimeUnit.SECONDS);
         threadsDone.await();
     }
 
@@ -249,21 +248,19 @@ public class AccountTransactionServiceTest {
             executor.submit(() -> {
                 try {
                     executeThreadForLockTest(9000, () -> accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER, BigDecimal.ONE), semaphore, permitThreadStart);
-                }
-                finally {
+                } finally {
                     threadsDone.countDown();
                 }
             });
         }
         try {
-            executeMainThreadForLockTest(semaphore,permitThreadStart);
+            executeMainThreadForLockTest(semaphore, permitThreadStart);
             fail();
-        }
-        catch (PessimisticLockingFailureException e){
+        } catch (PessimisticLockingFailureException e) {
             System.out.println("[PessimisticLockingFailureException] during lock test");
             assertTrue(true);
         }
-        executor.awaitTermination(30,TimeUnit.SECONDS);
+        executor.awaitTermination(30, TimeUnit.SECONDS);
         threadsDone.await();
     }
 
@@ -277,26 +274,24 @@ public class AccountTransactionServiceTest {
         for (int i = 0; i < numberOfThreads; i++) {
             executor.submit(() -> {
                 try {
-                    executeThreadForLockTest(9000, () -> accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER,BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.ONE), semaphore, permitThreadStart);
-                }
-                finally {
+                    executeThreadForLockTest(9000, () -> accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER, BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.ONE), semaphore, permitThreadStart);
+                } finally {
                     threadsDone.countDown();
                 }
             });
         }
         try {
-            executeMainThreadForLockTest(semaphore,permitThreadStart);
+            executeMainThreadForLockTest(semaphore, permitThreadStart);
             fail();
-        }
-        catch (PessimisticLockingFailureException e){
+        } catch (PessimisticLockingFailureException e) {
             System.out.println("[PessimisticLockingFailureException] during lock test");
             assertTrue(true);
         }
-        executor.awaitTermination(30,TimeUnit.SECONDS);
+        executor.awaitTermination(30, TimeUnit.SECONDS);
         threadsDone.await();
     }
 
-    private void executeMainThreadForLockTest(Semaphore semaphore,Semaphore permitThreadStart){
+    private void executeMainThreadForLockTest(Semaphore semaphore, Semaphore permitThreadStart) {
         transactionTemplate.execute(new TransactionCallback() {
             public Object doInTransaction(TransactionStatus status) {
                 permitThreadStart.release();
@@ -311,7 +306,8 @@ public class AccountTransactionServiceTest {
             }
         });
     }
-    private void executeThreadForLockTest(long sleepDuration, ExecutableMethod method, Semaphore semaphore,Semaphore permitThreadStart){
+
+    private void executeThreadForLockTest(long sleepDuration, ExecutableMethod method, Semaphore semaphore, Semaphore permitThreadStart) {
         transactionTemplate.execute(new TransactionCallback() {
             public Object doInTransaction(TransactionStatus status) {
                 method.execute();
@@ -328,7 +324,7 @@ public class AccountTransactionServiceTest {
         });
     }
 
-    private interface ExecutableMethod{
+    private interface ExecutableMethod {
         void execute();
     }
 }

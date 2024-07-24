@@ -14,6 +14,7 @@ import java.util.UUID;
 @Repository
 public interface BankAccountRepository extends JpaRepository<BankAccount, UUID> {
     Optional<BankAccount> findByAccountNumber(String accountNumber);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "3000"))
     Optional<BankAccount> getByAccountNumber(String accountNumber);
