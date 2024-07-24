@@ -20,4 +20,4 @@
 
 ## For Running Tests
 
-- Ensure Docker is running, as the application uses the Testcontainers library for integration tests. This library requires Docker to manage test databases and other resources.
+- Ensure Docker is running and available to connections from java app, as the application uses the Testcontainers library for integration tests.
