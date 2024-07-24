@@ -8,18 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.test.annotation.Commit;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.transaction.AfterTransaction;
-import org.springframework.test.context.transaction.BeforeTransaction;
-import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 import test.bank.domain.banking.BankAccount;
-import test.bank.domain.banking.transaction.BankTransaction;
 import test.bank.domain.banking.transaction.DepositTransaction;
 import test.bank.domain.banking.transaction.MoneyFlow;
 import test.bank.exception.BankApplicationException;
@@ -31,7 +25,6 @@ import test.bank.repository.TransferTransactionRepository;
 import test.bank.service.interfaces.AccountTransactionsService;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,8 +39,6 @@ public class AccountTransactionServiceTest {
     private AccountTransactionsService accountTransactionsService;
     @Autowired
     private BankTransactionRepository bankTransactionRepository;
-    private final String BANK_ACCOUNT_NUMBER = "0001110001110001";
-    private final String BANK_ACCOUNT_NUMBER_SECOND = "0001110001110002";
     @Autowired
     private DepositTransactionRepository depositTransactionRepository;
     @Autowired
@@ -55,12 +46,9 @@ public class AccountTransactionServiceTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
-
-    @Autowired
-    private EntityManager entityManager;
-
     private TransactionTemplate transactionTemplate;
-    private TransactionTemplate transactionTemplateSecond;
+    private final String BANK_ACCOUNT_NUMBER = "0001110001110001";
+    private final String BANK_ACCOUNT_NUMBER_SECOND = "0001110001110002";
 
     @AfterEach
     public void cleanUp(){
@@ -70,7 +58,6 @@ public class AccountTransactionServiceTest {
     @BeforeEach
     public void setUp(){
         transactionTemplate = new TransactionTemplate(transactionManager);
-        transactionTemplateSecond = new TransactionTemplate(transactionManager);
 
         var bankAccount1 = bankAccountRepository.save(new BankAccount(BigDecimal.TEN,BANK_ACCOUNT_NUMBER));
         depositTransactionRepository.save(new DepositTransaction(BigDecimal.TEN,System.currentTimeMillis(),bankAccount1, MoneyFlow.IN));
@@ -103,6 +90,7 @@ public class AccountTransactionServiceTest {
         accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER,BigDecimal.ONE);
 
         var withdrawsRes = bankTransactionRepository.findAllByBankAccountAccountNumber(BANK_ACCOUNT_NUMBER);
+
         assertEquals(initialBalance.subtract(BigDecimal.ONE),bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER).get().getBalance());
         assertEquals(initialMoneyOutCount + 1,withdrawsRes.stream().filter(t -> t.getFlow().equals(MoneyFlow.OUT)).count());
     }
@@ -222,7 +210,7 @@ public class AccountTransactionServiceTest {
 
 
     @Test
-    public void testSummationWithConcurrency() throws InterruptedException {
+    public void testWithdrawLock() throws InterruptedException {
         int numberOfThreads = 1;
         Semaphore semaphore = new Semaphore(0);
         Semaphore permitThreadStart = new Semaphore(0);
@@ -231,20 +219,7 @@ public class AccountTransactionServiceTest {
         for (int i = 0; i < numberOfThreads; i++) {
             executor.submit(() -> {
                 try {
-                    transactionTemplate.execute(new TransactionCallback() {
-                        public Object doInTransaction(TransactionStatus status) {
-                            accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.ONE);
-                            semaphore.release();
-                            try {
-                                permitThreadStart.acquire();
-                                Thread.sleep(9000);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException(e);
-                            }
-                            status.flush();
-                            return null;
-                        }
-                    });
+                    executeThreadForLockTest(9000, () -> accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.ONE), semaphore, permitThreadStart);
                 }
                 finally {
                     threadsDone.countDown();
@@ -252,27 +227,108 @@ public class AccountTransactionServiceTest {
             });
         }
         try {
-            transactionTemplate.execute(new TransactionCallback() {
-                public Object doInTransaction(TransactionStatus status) {
-                    permitThreadStart.release();
-                    try {
-                        semaphore.acquire();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
-                    accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER, BigDecimal.ONE);
-                    status.flush();
-                    return null;
-                }
-            });
+            executeMainThreadForLockTest(semaphore,permitThreadStart);
             fail();
         }
         catch (PessimisticLockingFailureException e){
             System.out.println("[PessimisticLockingFailureException] during lock test");
             assertTrue(true);
         }
-        executor.awaitTermination(1,TimeUnit.MINUTES);
+        executor.awaitTermination(30,TimeUnit.SECONDS);
         threadsDone.await();
     }
 
+    @Test
+    public void testDepositLock() throws InterruptedException {
+        int numberOfThreads = 1;
+        Semaphore semaphore = new Semaphore(0);
+        Semaphore permitThreadStart = new Semaphore(0);
+        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+        CountDownLatch threadsDone = new CountDownLatch(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            executor.submit(() -> {
+                try {
+                    executeThreadForLockTest(9000, () -> accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER, BigDecimal.ONE), semaphore, permitThreadStart);
+                }
+                finally {
+                    threadsDone.countDown();
+                }
+            });
+        }
+        try {
+            executeMainThreadForLockTest(semaphore,permitThreadStart);
+            fail();
+        }
+        catch (PessimisticLockingFailureException e){
+            System.out.println("[PessimisticLockingFailureException] during lock test");
+            assertTrue(true);
+        }
+        executor.awaitTermination(30,TimeUnit.SECONDS);
+        threadsDone.await();
+    }
+
+    @Test
+    public void testTransferLock() throws InterruptedException {
+        int numberOfThreads = 1;
+        Semaphore semaphore = new Semaphore(0);
+        Semaphore permitThreadStart = new Semaphore(0);
+        ExecutorService executor = Executors.newFixedThreadPool(numberOfThreads);
+        CountDownLatch threadsDone = new CountDownLatch(numberOfThreads);
+        for (int i = 0; i < numberOfThreads; i++) {
+            executor.submit(() -> {
+                try {
+                    executeThreadForLockTest(9000, () -> accountTransactionsService.transfer(BANK_ACCOUNT_NUMBER,BANK_ACCOUNT_NUMBER_SECOND, BigDecimal.ONE), semaphore, permitThreadStart);
+                }
+                finally {
+                    threadsDone.countDown();
+                }
+            });
+        }
+        try {
+            executeMainThreadForLockTest(semaphore,permitThreadStart);
+            fail();
+        }
+        catch (PessimisticLockingFailureException e){
+            System.out.println("[PessimisticLockingFailureException] during lock test");
+            assertTrue(true);
+        }
+        executor.awaitTermination(30,TimeUnit.SECONDS);
+        threadsDone.await();
+    }
+
+    private void executeMainThreadForLockTest(Semaphore semaphore,Semaphore permitThreadStart){
+        transactionTemplate.execute(new TransactionCallback() {
+            public Object doInTransaction(TransactionStatus status) {
+                permitThreadStart.release();
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER);
+                status.flush();
+                return null;
+            }
+        });
+    }
+    private void executeThreadForLockTest(long sleepDuration, ExecutableMethod method, Semaphore semaphore,Semaphore permitThreadStart){
+        transactionTemplate.execute(new TransactionCallback() {
+            public Object doInTransaction(TransactionStatus status) {
+                method.execute();
+                semaphore.release();
+                try {
+                    permitThreadStart.acquire();
+                    Thread.sleep(sleepDuration);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                status.flush();
+                return null;
+            }
+        });
+    }
+
+    private interface ExecutableMethod{
+        void execute();
+    }
 }

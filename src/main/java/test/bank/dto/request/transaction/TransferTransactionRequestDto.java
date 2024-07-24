@@ -17,6 +17,6 @@ public class TransferTransactionRequestDto {
     private String senderAccountNumber;
     @Pattern(regexp = "\\d{16}", message = "must be exactly 16 digits")
     private String receiverAccountNumber;
-    @DecimalMin(value = "0")
+    @DecimalMin(value = "0",inclusive = false)
     private BigDecimal amount;
 }

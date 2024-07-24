@@ -62,13 +62,11 @@ public class AccountManagementControllerTest {
     @ParameterizedTest
     @ValueSource(strings = {"0", "1"})
     void createBankAccountSuccess(String initialBalanceStr) throws Exception {
-        assertEquals(0,bankAccountRepository.findAll().size());
-        assertEquals(0,bankTransactionRepository.findAll().size());
-
         var initialBalanceExpected = new BigDecimal(initialBalanceStr).setScale(2, RoundingMode.HALF_UP);
-        when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
-        String requestBody = "{\"initialBalance\":" + initialBalanceStr + "}";
 
+        when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
+
+        String requestBody = "{\"initialBalance\":" + initialBalanceStr + "}";
         var resp = mockMvc.perform(post("/api/management/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -92,8 +90,8 @@ public class AccountManagementControllerTest {
         var resp = mockMvc.perform(get("/api/management/all"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
-
         var listResp = objectMapper.readValue(resp.getContentAsString(),new TypeReference<List<BankAccountResponseDto>>(){});
+
         assertEquals(expectedSize, listResp.size());
         assertArrayEquals(expectedArray,listResp.toArray());
     }

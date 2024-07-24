@@ -1,6 +1,6 @@
 services:
-  postgres:
-    container_name: bank-app
+  postgres-bank-app-db:
+    container_name: postgres-bank-app
     image: postgres:16
     restart: always
     environment:

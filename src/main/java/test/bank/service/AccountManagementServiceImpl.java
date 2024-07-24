@@ -32,7 +32,8 @@ public class AccountManagementServiceImpl implements AccountManagementService {
         bankAccount.setBalance(BigDecimal.ZERO);
         bankAccount.setAccountNumber(accountNumberGeneratorService.generateAccountNumber());
         bankAccount = bankAccountRepository.save(bankAccount);
-        accountTransactionsService.deposit(bankAccount.getAccountNumber(), initialBalance);
+        if(initialBalance.compareTo(BigDecimal.ZERO) > 0)
+            accountTransactionsService.deposit(bankAccount.getAccountNumber(), initialBalance);
 
         return bankAccount;
     }

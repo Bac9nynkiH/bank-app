@@ -24,8 +24,8 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public TransferTransaction transfer(String senderAccountNumber, String receiverAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) < 0){
-            throw new BankApplicationException("amount can not be negative");
+        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new BankApplicationException("amount should be positive");
         }
         if(senderAccountNumber.equals(receiverAccountNumber)){
             throw new BankApplicationException("senderAccountNumber and receiverAccountNumber can not be identical");
@@ -69,8 +69,8 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public WithdrawTransaction withdraw(String senderAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) < 0){
-            throw new BankApplicationException("amount can not be negative");
+        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new BankApplicationException("amount should be positive");
         }
 
         var timestamp = TimeUtil.currentTimeMillis();
@@ -100,8 +100,8 @@ public class AccountTransactionsServiceImpl implements AccountTransactionsServic
     @Override
     @Transactional
     public DepositTransaction deposit(String receiverAccountNumber, BigDecimal amount) {
-        if(amount.compareTo(BigDecimal.ZERO) < 0){
-            throw new BankApplicationException("amount can not be negative");
+        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+            throw new BankApplicationException("amount should be positive");
         }
 
         var timestamp = TimeUtil.currentTimeMillis();

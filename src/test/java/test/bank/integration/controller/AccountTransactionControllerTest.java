@@ -90,7 +90,6 @@ public class AccountTransactionControllerTest {
                             .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andReturn().getResponse();
-
             var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
             assertEquals(expected, dtoResp);
@@ -111,7 +110,6 @@ public class AccountTransactionControllerTest {
                             .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andReturn().getResponse();
-
             var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
             assertEquals(expected, dtoResp);
@@ -133,7 +131,6 @@ public class AccountTransactionControllerTest {
                             .content(objectMapper.writeValueAsString(dto)))
                     .andExpect(status().isOk())
                     .andReturn().getResponse();
-
             var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
             assertEquals(expected, dtoResp);

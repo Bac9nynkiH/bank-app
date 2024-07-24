@@ -72,6 +72,7 @@ class AccountManagementServiceTest {
     @Commit
     void createBankAccountSuccess(String initialBalanceStr) {
         when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
+
         var expected = new BankAccount(new BigDecimal(initialBalanceStr),BANK_ACCOUNT_NUMBER);
 
         var returned = service.createBankAccount(new BigDecimal(initialBalanceStr));
@@ -88,6 +89,7 @@ class AccountManagementServiceTest {
     @ValueSource(strings = {"-1"})
     void createBankAccountNegativeBalance(String initialBalanceStr) {
         when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
+
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
 
         assertThrowsExactly(BankApplicationNegativeBalanceException.class,() -> service.createBankAccount(initialBalance));

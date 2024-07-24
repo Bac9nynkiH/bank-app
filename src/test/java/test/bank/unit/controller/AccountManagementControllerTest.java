@@ -44,12 +44,13 @@ class AccountManagementControllerTest {
     @ValueSource(strings = {"0", "1"})
     void createBankAccountSuccess(String initialBalanceStr) throws Exception {
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
-        var dto = new BankAccountCreateRequestDto(initialBalance);
 
         var expected = new BankAccountResponseDto(UUID.randomUUID(),initialBalance,BANK_ACCOUNT_NUMBER);
+
         var entity = new BankAccount(initialBalance,BANK_ACCOUNT_NUMBER);
         when(accountManagementService.createBankAccount(initialBalance)).thenReturn(entity);
 
+        var dto = new BankAccountCreateRequestDto(initialBalance);
         mockMvc.perform(post("/api/management/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -65,8 +66,8 @@ class AccountManagementControllerTest {
     @ValueSource(strings = {"-1"})
     void createBankAccountValidationError(String initialBalanceStr) throws Exception {
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
-        var dto = new BankAccountCreateRequestDto(initialBalance);
 
+        var dto = new BankAccountCreateRequestDto(initialBalance);
         mockMvc.perform(post("/api/management/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
@@ -80,6 +81,7 @@ class AccountManagementControllerTest {
     void findAllSuccess() throws Exception {
         var id = UUID.randomUUID();
         List<BankAccount> expected = List.of(new BankAccount(id,BigDecimal.ZERO,BANK_ACCOUNT_NUMBER));
+
         when(accountManagementService.findAll()).thenReturn(expected);
 
         mockMvc.perform(get("/api/management/all"))
@@ -97,6 +99,7 @@ class AccountManagementControllerTest {
     void getByAccountNumberSuccess() throws Exception {
         var id = UUID.randomUUID();
         BankAccount expected = new BankAccount(id,BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
+
         when(accountManagementService.getByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(expected);
 
         mockMvc.perform(get("/api/management/" + BANK_ACCOUNT_NUMBER))

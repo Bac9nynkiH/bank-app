@@ -56,6 +56,7 @@ public class AccountTransactionServiceImplTest {
     public void depositSuccess(){
         var initialBalance = BigDecimal.ZERO;
         var bankAccount = new BankAccount(initialBalance,BANK_ACCOUNT_NUMBER);
+
         when(bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(Optional.of(bankAccount));
 
         accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER,BigDecimal.ONE);
@@ -70,6 +71,7 @@ public class AccountTransactionServiceImplTest {
     public void withdrawSuccess(){
         var initialBalance = BigDecimal.ONE;
         var bankAccount = new BankAccount(initialBalance,BANK_ACCOUNT_NUMBER);
+
         when(bankAccountRepository.getByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(Optional.of(bankAccount));
 
         accountTransactionsService.withdraw(BANK_ACCOUNT_NUMBER,BigDecimal.ONE);

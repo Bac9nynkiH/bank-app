@@ -55,6 +55,7 @@ public class AccountTransactionControllerTest {
 
         var expected = new TransferTransactionResponseDto(timestamp,BigDecimal.ONE,BANK_ACCOUNT_NUMBER, MoneyFlow.OUT,BANK_ACCOUNT_NUMBER_SECOND);
         var entity = new TransferTransaction(UUID.randomUUID(),BigDecimal.ONE,timestamp,new BankAccount(UUID.randomUUID(),BigDecimal.TEN,BANK_ACCOUNT_NUMBER),MoneyFlow.OUT,new BankAccount(UUID.randomUUID(),BigDecimal.TEN,BANK_ACCOUNT_NUMBER_SECOND));
+
         when(accountTransactionsService.transfer(dto.getSenderAccountNumber(),dto.getReceiverAccountNumber(),dto.getAmount())).thenReturn(entity);
 
         var resp = mockMvc.perform(post("/api/transaction/transfer")
@@ -62,7 +63,6 @@ public class AccountTransactionControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
-
         var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
         assertEquals(expected, dtoResp);
@@ -76,6 +76,7 @@ public class AccountTransactionControllerTest {
 
         var expected = new TransactionResponseDto(timestamp,BigDecimal.ONE,BANK_ACCOUNT_NUMBER, MoneyFlow.OUT);
         var entity = new WithdrawTransaction(UUID.randomUUID(),BigDecimal.ONE,timestamp,new BankAccount(UUID.randomUUID(),BigDecimal.TEN,BANK_ACCOUNT_NUMBER),MoneyFlow.OUT);
+
         when(accountTransactionsService.withdraw(dto.getAccountNumber(),dto.getAmount())).thenReturn(entity);
 
         var resp = mockMvc.perform(post("/api/transaction/withdraw")
@@ -83,7 +84,6 @@ public class AccountTransactionControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
-
         var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
         assertEquals(expected, dtoResp);
@@ -104,7 +104,6 @@ public class AccountTransactionControllerTest {
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse();
-
         var dtoResp = objectMapper.readValue(resp.getContentAsString(),TransferTransactionResponseDto.class);
 
         assertEquals(expected, dtoResp);
