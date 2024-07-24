@@ -6,7 +6,6 @@ CREATE TABLE bank_transaction
     id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     amount          DECIMAL(20, 2),
     timestamp       BIGINT,
-    last_name       VARCHAR(255),
     flow            varchar(255),
     bank_account_id UUID REFERENCES bank_account (id)
 );
