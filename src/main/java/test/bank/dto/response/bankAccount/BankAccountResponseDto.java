@@ -1,6 +1,6 @@
-package test.bank.dto.bankAccount;
+package test.bank.dto.response.bankAccount;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import test.bank.domain.banking.BankAccount;
@@ -13,14 +13,13 @@ import java.util.UUID;
 @NoArgsConstructor
 public class BankAccountResponseDto {
     private UUID id;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "0.00")
     private BigDecimal balance;
     private String accountNumber;
 
     public BankAccountResponseDto(UUID id, BigDecimal balance, String accountNumber) {
-        balance = balance.setScale(2, RoundingMode.HALF_UP);
-
         this.id = id;
-        this.balance = balance;
+        this.balance = balance.setScale(2, RoundingMode.HALF_UP);
         this.accountNumber = accountNumber;
     }
 

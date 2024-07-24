@@ -3,9 +3,8 @@ package test.bank.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import test.bank.domain.banking.BankAccount;
-import test.bank.dto.bankAccount.BankAccountCreateDto;
-import test.bank.dto.bankAccount.BankAccountResponseDto;
+import test.bank.dto.request.bankAccount.BankAccountCreateRequestDto;
+import test.bank.dto.response.bankAccount.BankAccountResponseDto;
 import test.bank.service.interfaces.AccountManagementService;
 
 import java.util.List;
@@ -16,8 +15,8 @@ import java.util.List;
 public class AccountManagementController {
     private final AccountManagementService accountManagementService;
     @PostMapping("/create")
-    public BankAccountResponseDto createBankAccount(@RequestBody @Valid BankAccountCreateDto bankAccountCreateDto){
-        return BankAccountResponseDto.of(accountManagementService.createBankAccount(bankAccountCreateDto.getInitialBalance()));
+    public BankAccountResponseDto createBankAccount(@RequestBody @Valid BankAccountCreateRequestDto bankAccountCreateRequestDto){
+        return BankAccountResponseDto.of(accountManagementService.createBankAccount(bankAccountCreateRequestDto.getInitialBalance()));
     }
     @GetMapping("/all")
     public List<BankAccountResponseDto> findAll(){

@@ -13,3 +13,9 @@ spring:
       hibernate:
         format_sql: true
     database: postgresql
+
+junit:
+  jupiter:
+    execution:
+      parallel:
+        enabled: true

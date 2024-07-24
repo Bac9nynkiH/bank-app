@@ -18,6 +18,8 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 import test.bank.exception.ApiError;
+import test.bank.exception.BankApplicationBadRequestException;
+import test.bank.exception.BankApplicationException;
 import test.bank.exception.BankApplicationNotFoundException;
 
 import java.sql.SQLException;
@@ -38,14 +40,36 @@ public class ExceptionControllerAdvice extends ResponseEntityExceptionHandler {
     }
     @ExceptionHandler(value = {BankApplicationNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    protected ResponseEntity<ApiError> handleMattermostNotFoundException(HttpServletRequest req, BankApplicationNotFoundException ex) {
-        log.warn("[handleMattermostNotFoundException] exception: {}", ex.getMessage());
+    protected ResponseEntity<ApiError> handleBankApplicationNotFoundException(HttpServletRequest req, BankApplicationNotFoundException ex) {
+        log.warn("[handleBankApplicationNotFoundException] exception: {}", ex.getMessage());
 
         var bodyOfResponse = "entity not found";
         var error = "entity not found";
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.from(HttpStatus.NOT_FOUND, error, bodyOfResponse, req.getRequestURI()));
+    }
+    @ExceptionHandler(value = {BankApplicationBadRequestException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    protected ResponseEntity<ApiError> handleBankApplicationBadRequestException(HttpServletRequest req, BankApplicationBadRequestException ex) {
+        log.warn("[handleBankApplicationBadRequestException] exception: {}", ex.getMessage());
+
+        var bodyOfResponse = ex.getMessage();
+        var error = "bad request";
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.from(HttpStatus.BAD_REQUEST, error, bodyOfResponse, req.getRequestURI()));
+    }
+    @ExceptionHandler(value = {BankApplicationException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    protected ResponseEntity<ApiError> handleBankApplicationException(HttpServletRequest req, BankApplicationBadRequestException ex) {
+        log.warn("[handleBankApplicationBadRequestException] exception: {}", ex.getMessage());
+
+        var bodyOfResponse = "internal server error";
+        var error = "internal server error";
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiError.from(HttpStatus.INTERNAL_SERVER_ERROR, error, bodyOfResponse, req.getRequestURI()));
     }
 
     @ExceptionHandler(value = {PersistenceException.class})

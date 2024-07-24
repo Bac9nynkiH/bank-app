@@ -1,35 +1,23 @@
 package test.bank.unit.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.PersistenceException;
-import org.hibernate.HibernateException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import test.bank.controller.AccountManagementController;
 import test.bank.domain.banking.BankAccount;
-import test.bank.dto.bankAccount.BankAccountCreateDto;
-import test.bank.dto.bankAccount.BankAccountResponseDto;
+import test.bank.dto.request.bankAccount.BankAccountCreateRequestDto;
+import test.bank.dto.response.bankAccount.BankAccountResponseDto;
 import test.bank.exception.BankApplicationNotFoundException;
 import test.bank.service.interfaces.AccountManagementService;
 
 import java.math.BigDecimal;
-import java.sql.SQLException;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,7 +44,7 @@ class AccountManagementControllerTest {
     @ValueSource(strings = {"0", "1"})
     void createBankAccountSuccess(String initialBalanceStr) throws Exception {
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
-        var dto = new BankAccountCreateDto(initialBalance);
+        var dto = new BankAccountCreateRequestDto(initialBalance);
 
         var expected = new BankAccountResponseDto(UUID.randomUUID(),initialBalance,BANK_ACCOUNT_NUMBER);
         var entity = new BankAccount(initialBalance,BANK_ACCOUNT_NUMBER);
@@ -70,13 +58,14 @@ class AccountManagementControllerTest {
                 .andExpect(jsonPath("$.balance").value(expected.getBalance()));
 
         verify(accountManagementService,times(1)).createBankAccount(initialBalance);
+        verifyNoMoreInteractions(accountManagementService);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"-1"})
     void createBankAccountValidationError(String initialBalanceStr) throws Exception {
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
-        var dto = new BankAccountCreateDto(initialBalance);
+        var dto = new BankAccountCreateRequestDto(initialBalance);
 
         mockMvc.perform(post("/api/management/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -96,11 +85,12 @@ class AccountManagementControllerTest {
         mockMvc.perform(get("/api/management/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].balance").value(BigDecimal.ZERO))
+                .andExpect(jsonPath("$[0].balance").value(BigDecimal.ZERO.setScale(2,RoundingMode.HALF_UP)))
                 .andExpect(jsonPath("$[0].accountNumber").value(BANK_ACCOUNT_NUMBER))
                 .andExpect(jsonPath("$[0].id").value(id.toString()));
 
         verify(accountManagementService,times(1)).findAll();
+        verifyNoMoreInteractions(accountManagementService);
     }
 
     @Test
@@ -111,11 +101,12 @@ class AccountManagementControllerTest {
 
         mockMvc.perform(get("/api/management/" + BANK_ACCOUNT_NUMBER))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.balance").value(BigDecimal.ZERO))
+                .andExpect(jsonPath("$.balance").value(BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP)))
                 .andExpect(jsonPath("$.accountNumber").value(BANK_ACCOUNT_NUMBER))
                 .andExpect(jsonPath("$.id").value(id.toString()));
 
         verify(accountManagementService,times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
+        verifyNoMoreInteractions(accountManagementService);
     }
     @Test
     void getByAccountNumberNotFoundError() throws Exception {
@@ -126,5 +117,6 @@ class AccountManagementControllerTest {
                 .andExpect(jsonPath("$.message").value("entity not found"));
 
         verify(accountManagementService,times(1)).getByAccountNumber(BANK_ACCOUNT_NUMBER);
+        verifyNoMoreInteractions(accountManagementService);
     }
 }

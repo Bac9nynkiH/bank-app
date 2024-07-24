@@ -13,6 +13,6 @@ public class AccountNumberGeneratorServiceImpl implements AccountNumberGenerator
     private Integer accNumberLength;
     @Override
     public String generateAccountNumber() {
-        return String.format("%010d",new BigInteger(UUID.randomUUID().toString().replace("-",""),accNumberLength));
+        return String.format("%010d",new BigInteger(UUID.randomUUID().toString().replace("-",""),16)).substring(0,accNumberLength);
     }
 }

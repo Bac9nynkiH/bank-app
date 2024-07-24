@@ -1,27 +1,39 @@
-package test.bank.unit.service;
+package test.bank.integration.service;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Spy;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
-import org.testcontainers.shaded.org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.annotation.Commit;
+import org.springframework.transaction.annotation.Transactional;
 import test.bank.domain.banking.BankAccount;
+import test.bank.domain.banking.transaction.BankTransaction;
 import test.bank.domain.banking.transaction.DepositTransaction;
+import test.bank.domain.banking.transaction.MoneyFlow;
 import test.bank.exception.BankApplicationException;
 import test.bank.exception.BankApplicationNegativeBalanceException;
 import test.bank.exception.BankApplicationNotFoundException;
 import test.bank.repository.BankAccountRepository;
+import test.bank.repository.BankTransactionRepository;
+import test.bank.repository.DepositTransactionRepository;
 import test.bank.service.AccountManagementServiceImpl;
 import test.bank.service.interfaces.AccountNumberGeneratorService;
 import test.bank.service.interfaces.AccountTransactionsService;
+import test.bank.util.TimeUtil;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,83 +43,82 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class AccountManagementServiceImplTest {
-    @Mock
+@SpringBootTest
+class AccountManagementServiceTest {
+    @Autowired
     private BankAccountRepository bankAccountRepository;
-    @Spy
+    @MockBean
     private AccountNumberGeneratorService accountNumberGeneratorService;
-    @Mock
+    @Autowired
     private AccountTransactionsService accountTransactionsService;
-    @InjectMocks
+    @Autowired
     private AccountManagementServiceImpl service;
+    @Autowired
+    private BankTransactionRepository bankTransactionRepository;
+    @Autowired
+    private DepositTransactionRepository depositTransactionRepository;
     private final String BANK_ACCOUNT_NUMBER = "0001110001110001";
+
+
+    @AfterEach
+    public void cleanUp(){
+        bankTransactionRepository.deleteAll();
+        bankAccountRepository.deleteAll();
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {"1","10"})
+    @Transactional
+    @Commit
     void createBankAccountSuccess(String initialBalanceStr) {
-        var balance = new BigDecimal(initialBalanceStr);
-        var expected = new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
-        when(bankAccountRepository.save(any())).thenReturn(expected);
         when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
-        when(accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER,balance)).then(
-                (Answer) invocation -> {
-                    expected.setBalance(balance);
-                    return new DepositTransaction();
-                });
+        var expected = new BankAccount(new BigDecimal(initialBalanceStr),BANK_ACCOUNT_NUMBER);
 
         var returned = service.createBankAccount(new BigDecimal(initialBalanceStr));
-        assertEquals(expected,returned);
-        assertEquals(expected.getBalance(),returned.getBalance());
+        var resultTransactions = depositTransactionRepository.findAll();
 
-        verify(bankAccountRepository,times(1)).save(any());
-        verify(accountTransactionsService,times(1)).deposit(BANK_ACCOUNT_NUMBER,balance);
-        verifyNoMoreInteractions(bankAccountRepository);
-        verifyNoMoreInteractions(accountTransactionsService);
+        assertEquals(expected.getAccountNumber(),returned.getAccountNumber());
+        assertEquals(expected.getBalance(),returned.getBalance());
+        assertEquals(1,resultTransactions.size());
+        assertEquals(BANK_ACCOUNT_NUMBER,resultTransactions.get(0).getBankAccount().getAccountNumber());
+        assertEquals(MoneyFlow.IN,resultTransactions.get(0).getFlow());
+        assertEquals(new BigDecimal(initialBalanceStr),resultTransactions.get(0).getAmount());
     }
     @ParameterizedTest
     @ValueSource(strings = {"-1"})
     void createBankAccountNegativeBalance(String initialBalanceStr) {
+        when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
         BigDecimal initialBalance = new BigDecimal(initialBalanceStr);
 
         assertThrowsExactly(BankApplicationNegativeBalanceException.class,() -> service.createBankAccount(initialBalance));
         assertThrows(BankApplicationException.class,() -> service.createBankAccount(initialBalance));
-
-        verify(bankAccountRepository,times(0)).save(any());
-        verify(accountTransactionsService,times(0)).deposit(anyString(),any());
+        assertFalse(bankAccountRepository.findByAccountNumber(BANK_ACCOUNT_NUMBER).isPresent());
     }
 
     @Test
     void findAll() {
-        List<BankAccount> expected = List.of(new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER));
-        when(bankAccountRepository.findAll()).thenReturn(expected);
+        var expected = new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
+        bankAccountRepository.save(expected);
 
         var returned = service.findAll();
 
         verify(bankAccountRepository,times(1)).findAll();
         verifyNoMoreInteractions(bankAccountRepository);
 
-        assertArrayEquals(expected.toArray(),returned.toArray());
+        assertArrayEquals(List.of(expected).toArray(),returned.toArray());
     }
 
     @Test
     void getByAccountNumberNotFound() {
-        when(bankAccountRepository.findByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(Optional.empty());
-
         assertThrows(BankApplicationNotFoundException.class,() -> service.getByAccountNumber(BANK_ACCOUNT_NUMBER));
-        verify(bankAccountRepository,times(1)).findByAccountNumber(BANK_ACCOUNT_NUMBER);
-        verifyNoMoreInteractions(bankAccountRepository);
 
     }
     @Test
     void getByAccountNumberSuccess() {
-        var expected = new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER);
-        when(bankAccountRepository.findByAccountNumber(BANK_ACCOUNT_NUMBER)).thenReturn(Optional.of(expected));
+        var expected = bankAccountRepository.save(new BankAccount(UUID.randomUUID(),BigDecimal.ZERO,BANK_ACCOUNT_NUMBER));
 
         var returned = service.getByAccountNumber(BANK_ACCOUNT_NUMBER);
         assertEquals(expected,returned);
         assertEquals(expected.getBalance(),returned.getBalance());
-        verify(bankAccountRepository,times(1)).findByAccountNumber(BANK_ACCOUNT_NUMBER);
-        verifyNoMoreInteractions(bankAccountRepository);
     }
 }

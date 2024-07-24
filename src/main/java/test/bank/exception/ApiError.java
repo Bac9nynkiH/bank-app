@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.Nullable;
+import test.bank.util.TimeUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,21 +30,10 @@ public class ApiError {
                                 @Nullable String message,
                                 String originPath) {
         return new ApiError(
-                System.currentTimeMillis(),
+                TimeUtil.currentTimeMillis(),
                 status.value(),
                 error,
                 message,
                 originPath);
-    }
-
-    public static ApiError invalid(HttpStatus status, String originPath, Set<String> violations) {
-        final String message = "Validation Error" + ": " +
-                               Arrays.toString(Collections.singletonList(violations).toArray())
-                                       .replaceAll("\\[", "").replaceAll("]", "") +
-                               ".";
-        return new ApiError(
-                System.currentTimeMillis(),
-                status.value(), status.getReasonPhrase(),
-                message, originPath);
     }
 }
