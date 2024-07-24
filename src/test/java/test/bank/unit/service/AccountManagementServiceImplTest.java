@@ -44,15 +44,9 @@ class AccountManagementServiceImplTest {
     @ParameterizedTest
     @ValueSource(strings = {"0"})
     void createBankAccountSuccessZeroDeposit(String initialBalanceStr) {
-        var balance = new BigDecimal(initialBalanceStr);
         var expected = new BankAccount(UUID.randomUUID(), BigDecimal.ZERO, BANK_ACCOUNT_NUMBER);
         when(bankAccountRepository.save(any())).thenReturn(expected);
         when(accountNumberGeneratorService.generateAccountNumber()).thenReturn(BANK_ACCOUNT_NUMBER);
-        when(accountTransactionsService.deposit(BANK_ACCOUNT_NUMBER, balance)).then(
-                (Answer) invocation -> {
-                    expected.setBalance(balance);
-                    return new DepositTransaction();
-                });
 
         var returned = service.createBankAccount(new BigDecimal(initialBalanceStr));
         assertEquals(expected, returned);
